@@ -1,54 +1,54 @@
-name: Build Demo MAUI iOS
+name: Build Demo MAUI iOS IPA
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
+    name: Build Demo iOS
     runs-on: macos-latest
 
     steps:
 
+      # 1. Get the source code
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check files
-        run: |
-          echo "Current directory:"
-          pwd
-          echo "Files:"
-          ls -la
-          echo "Project:"
-          ls -la Demo.csproj
-
-      - name: Setup .NET
+      # 2. Install .NET 8
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install MAUI
+      # 3. Install MAUI
+      - name: Install MAUI workload
         run: |
           dotnet workload install maui
 
-      - name: Check .NET
+      # 4. Check environment
+      - name: Check environment
         run: |
           dotnet --info
+          xcodebuild -version
 
-      - name: Restore Demo
+      # 5. Restore your MAUI project
+      - name: Restore
         run: |
-          dotnet restore ./Demo.csproj
+          dotnet restore Demo/Demo.csproj
 
+      # 6. Build iOS
       - name: Build iOS
         run: |
-          dotnet build ./Demo.csproj \
+          dotnet build Demo/Demo.csproj \
             -f net8.0-ios \
             -c Release \
             -r ios-arm64 \
             -p:EnableCodeSigning=false
 
+      # 7. Create IPA
       - name: Publish IPA
         run: |
-          dotnet publish ./Demo.csproj \
+          dotnet publish Demo/Demo.csproj \
             -f net8.0-ios \
             -c Release \
             -r ios-arm64 \
@@ -56,11 +56,13 @@ jobs:
             -p:BuildIpa=true \
             -p:EnableCodeSigning=false
 
+      # 8. Find IPA
       - name: Find IPA
         run: |
           echo "Searching for IPA..."
           find . -name "*.ipa" -print
 
+      # 9. Upload IPA to GitHub
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
