@@ -1,0 +1,62 @@
+name: Build Demo MAUI iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build Demo iOS
+    runs-on: macos-latest
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install MAUI workload
+        run: |
+          dotnet workload install maui
+
+      - name: Check environment
+        run: |
+          dotnet --info
+          xcodebuild -version
+
+      - name: Restore
+        run: |
+          dotnet restore Demo.csproj
+
+      - name: Build iOS
+        run: |
+          dotnet build Demo.csproj \
+            -f net8.0-ios \
+            -c Release \
+            -r ios-arm64 \
+            -p:EnableCodeSigning=false
+
+      - name: Publish IPA
+        run: |
+          dotnet publish Demo.csproj \
+            -f net8.0-ios \
+            -c Release \
+            -r ios-arm64 \
+            -p:ArchiveOnBuild=true \
+            -p:BuildIpa=true \
+            -p:EnableCodeSigning=false
+
+      - name: Find IPA
+        run: |
+          echo "Searching for IPA..."
+          find . -name "*.ipa" -print
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Demo-iOS-IPA
+          path: "**/*.ipa"
+          if-no-files-found: error
