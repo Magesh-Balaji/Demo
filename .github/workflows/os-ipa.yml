@@ -1,39 +1,46 @@
-name: Build Demo MAUI iOS IPA
+name: Build Demo MAUI iOS
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    name: Build Demo iOS
     runs-on: macos-latest
 
     steps:
 
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Check files
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Files:"
+          ls -la
+          echo "Project:"
+          ls -la Demo.csproj
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install MAUI workload
+      - name: Install MAUI
         run: |
           dotnet workload install maui
 
-      - name: Check environment
+      - name: Check .NET
         run: |
           dotnet --info
-          xcodebuild -version
 
-      - name: Restore
+      - name: Restore Demo
         run: |
-          dotnet restore Demo.csproj
+          dotnet restore ./Demo.csproj
 
       - name: Build iOS
         run: |
-          dotnet build Demo.csproj \
+          dotnet build ./Demo.csproj \
             -f net8.0-ios \
             -c Release \
             -r ios-arm64 \
@@ -41,7 +48,7 @@ jobs:
 
       - name: Publish IPA
         run: |
-          dotnet publish Demo.csproj \
+          dotnet publish ./Demo.csproj \
             -f net8.0-ios \
             -c Release \
             -r ios-arm64 \
